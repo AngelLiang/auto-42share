@@ -17,6 +17,7 @@ openpyxl = "^3.1.2"
 pyinstaller = "^5.10.1"
 pyside6 = "6.3.1"
 loguru = "^0.7.0"
+chardet = "^5.1.0"
 
 [tool.poetry.dev-dependencies]
 

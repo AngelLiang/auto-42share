@@ -1,5 +1,6 @@
 import openpyxl
 from datetime import datetime
+import log
 
 
 def write_to_excel(title, url):
@@ -24,6 +25,8 @@ def write_to_excel(title, url):
     try:
         # 保存文件
         wb.save(filename)
+        log.logger.info(f'保存文件 {filename}')
     except PermissionError:
-        print('无法写入到excel文件，请检查文件')
+        msg = '无法写入到excel文件，请检查文件'
+        log.logger.error(msg)
         exit(1)

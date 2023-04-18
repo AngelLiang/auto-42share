@@ -10,7 +10,7 @@ from selenium import webdriver
 
 import read_csv
 import write_excel
-
+import log
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -49,12 +49,14 @@ def enter_api_key(api_key=CHATGPT_APIKEY):
             (By.XPATH, "//input[@placeholder='OpenAI API Key']"))
     )
     apikey_input.send_keys(api_key)
+    log.logger.info('设置apikey')
 
 
 def return_chat():
     new_chat = driver.find_element_by_xpath(
         "/html/body/div/div[1]/div[2]/div/div")
     new_chat.click()
+    log.logger.info('返回对话框')
 
 
 def create_new_chat():
@@ -64,6 +66,7 @@ def create_new_chat():
             (By.XPATH, "/html/body/div/div[1]/div[3]/div[2]/div"))
     )
     new_chat.click()
+    log.logger.info('创建新的对话框')
 
 
 def send_message(text):
@@ -78,12 +81,13 @@ def send_message(text):
     random_second = gen_random_second()
     sleep(random_second)  # 等待几秒再发送
     send_button.click()
+    log.logger.info('发送消息')
 
 
 def wait_reply_finish():
     entering_flag = driver.find_elements_by_class_name(
         'home_chat-message-status__EsVNi')
-    print('正在输入...')
+    log.logger.info('正在输入...')
     while len(entering_flag) >= 1:
         sleep(3)
         entering_flag = driver.find_elements_by_class_name(
@@ -111,6 +115,7 @@ def click_share_and_get_url() -> str:
     window_handles = driver.window_handles
     # 切换到新打开的窗口
     driver.switch_to.window(window_handles[-1])
+    log.logger.info('分享并获取连接')
     return driver.current_url
 
 
@@ -120,11 +125,13 @@ def switch_chat():
     window_handles = driver.window_handles
     # 切换到第一个窗口
     driver.switch_to.window(window_handles[0])
+    log.logger.info('切换对话框')
     # 等待切换
     sleep(3)
 
 
-def start(api_key=CHATGPT_APIKEY):
+def start(api_key=CHATGPT_APIKEY, filepath='questions.csv'):
+    log.logger.info('启动浏览器')
     global driver
     # 创建一个新的Chrome浏览器实例
     chrome_options = Options()
@@ -134,12 +141,13 @@ def start(api_key=CHATGPT_APIKEY):
     driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=chrome_options)
 
     driver.get("https://chat.42share.io/")
+    log.logger.info('访问 https://chat.42share.io/')
 
     click_setting()
     enter_api_key(api_key)
     return_chat()
 
-    question_group = read_csv.read_questions()
+    question_group = read_csv.read_questions(filepath)
     for questions in question_group:
         for chat_message in questions:
             if not chat_message:
@@ -148,14 +156,14 @@ def start(api_key=CHATGPT_APIKEY):
             wait_reply_finish()
             reply = get_reply()
             if '出错了，稍后重试' in reply:
-                print('出错了，再发送一次问题')
+                log.logger.error('出错了，再发送一次问题启动浏览器')
                 send_message(chat_message)
                 wait_reply_finish()
         send_message("请用10字以内总结前面全部对话")
         wait_reply_finish()
         title = get_reply()
         share_url = click_share_and_get_url()
-        print(f'{title} {share_url}')
+        log.logger.info(f'{title} {share_url}')
         if title and share_url:
             write_excel.write_to_excel(title, share_url)
 
