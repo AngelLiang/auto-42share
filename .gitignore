@@ -4,3 +4,5 @@ __pycache__
 *.json
 .env
 conf.ini
+build
+dist

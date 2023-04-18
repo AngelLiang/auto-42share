@@ -7,7 +7,7 @@ def read_questions(filepath='questions.csv'):
         reader = csv.reader(f)
         for row in reader:
             questions.append(row)
-    print(f'一共读取{len(questions)}组问题')
+    # print(f'一共读取{len(questions)}组问题')
     return questions
 
 

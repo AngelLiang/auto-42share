@@ -65,12 +65,14 @@ class MyWidget(QtWidgets.QWidget):
         except Exception as e:
             print(f"An error occurred while reading the CSV file: {e}")
 
-        print(questions)
+        print(f'一共读取到{len(questions)}组问题')
 
         from main import start
         t = Thread(target=start, args=(api_key,), daemon=True)
         t.start()
+
         self.button.setEnabled(False)
+        self.apikey_input.setEnabled(False)
 
 
 if __name__ == "__main__":

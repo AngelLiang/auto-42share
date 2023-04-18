@@ -25,4 +25,5 @@ def write_to_excel(title, url):
         # 保存文件
         wb.save(filename)
     except PermissionError:
-        print('无法写入到excel文件')
+        print('无法写入到excel文件，请检查文件')
+        exit(1)
