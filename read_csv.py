@@ -1,9 +1,9 @@
 import csv
 
 
-def read_questions():
+def read_questions(filepath='questions.csv'):
     questions = []
-    with open('questions.csv', encoding="utf-8") as f:
+    with open(filepath, encoding="utf-8") as f:
         reader = csv.reader(f)
         for row in reader:
             questions.append(row)
@@ -11,4 +11,5 @@ def read_questions():
     return questions
 
 
-read_questions()
+if __name__ == '__main__':
+    read_questions()

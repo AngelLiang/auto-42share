@@ -24,17 +24,8 @@ if not CHROMEDRIVER_PATH:
     print(f'CHROMEDRIVER_PATH:{CHROMEDRIVER_PATH}')
     exit(0)
 
-# 创建一个新的Chrome浏览器实例
-chrome_options = Options()
-# chrome_options.add_argument("--incognito")
-# chrome_options.add_argument("--start-maximized")
-chrome_options.add_extension('42share.crx')
-driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=chrome_options)
 
-driver.get("https://chat.42share.io/")
-
-
-wait = WebDriverWait(driver, 20)
+driver = None
 
 
 def gen_random_second(min=8, max=15) -> int:
@@ -42,6 +33,7 @@ def gen_random_second(min=8, max=15) -> int:
 
 
 def click_setting():
+    wait = WebDriverWait(driver, 20)
     button = wait.until(
         EC.presence_of_element_located(
             (By.XPATH, "/html/body/div/div[1]/div[3]/div[1]/div[2]/div"))
@@ -49,13 +41,14 @@ def click_setting():
     button.click()
 
 
-def enter_api_key():
+def enter_api_key(api_key=CHATGPT_APIKEY):
     # 显式等待
+    wait = WebDriverWait(driver, 20)
     apikey_input = wait.until(
         EC.presence_of_element_located(
             (By.XPATH, "//input[@placeholder='OpenAI API Key']"))
     )
-    apikey_input.send_keys(CHATGPT_APIKEY)
+    apikey_input.send_keys(api_key)
 
 
 def return_chat():
@@ -65,6 +58,7 @@ def return_chat():
 
 
 def create_new_chat():
+    wait = WebDriverWait(driver, 20)
     new_chat = wait.until(
         EC.visibility_of_element_located(
             (By.XPATH, "/html/body/div/div[1]/div[3]/div[2]/div"))
@@ -73,6 +67,7 @@ def create_new_chat():
 
 
 def send_message(text):
+    wait = WebDriverWait(driver, 20)
     chat_input = wait.until(
         EC.visibility_of_element_located(
             (By.CSS_SELECTOR, "div.home_chat-input-panel-inner__8J59p > textarea.home_chat-input__qM_hd"))
@@ -129,9 +124,19 @@ def switch_chat():
     sleep(3)
 
 
-def main():
+def start(api_key=CHATGPT_APIKEY):
+    global driver
+    # 创建一个新的Chrome浏览器实例
+    chrome_options = Options()
+    # chrome_options.add_argument("--incognito")
+    # chrome_options.add_argument("--start-maximized")
+    chrome_options.add_extension('42share.crx')
+    driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=chrome_options)
+
+    driver.get("https://chat.42share.io/")
+
     click_setting()
-    enter_api_key()
+    enter_api_key(api_key)
     return_chat()
 
     question_group = read_csv.read_questions()
@@ -141,6 +146,11 @@ def main():
                 continue
             send_message(chat_message)
             wait_reply_finish()
+            reply = get_reply()
+            if '出错了，稍后重试' in reply:
+                print('出错了，再发送一次问题')
+                send_message(chat_message)
+                wait_reply_finish()
         send_message("请用10字以内总结前面全部对话")
         wait_reply_finish()
         title = get_reply()
@@ -160,6 +170,7 @@ def main():
     # driver.quit()
 
 
-main()
-# create_new_chat()
-# click_share_and_get_url()
+if __name__ == "__main__":
+    start()
+    # create_new_chat()
+    # click_share_and_get_url()

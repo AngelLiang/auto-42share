@@ -5,13 +5,17 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 
+[[tool.poetry.source]]
+name = "aliyun"
+url = "https://mirrors.aliyun.com/pypi/simple/"
+
 [tool.poetry.dependencies]
-python = "^3.10,<3.12"
+python = "^3.10,<3.11"
 selenium = "3.141.0"
 python-dotenv = "^1.0.0"
 openpyxl = "^3.1.2"
 pyinstaller = "^5.10.1"
-PySide6 = "^6.5.0"
+pyside6 = "6.3.1"
 
 [tool.poetry.dev-dependencies]
 
