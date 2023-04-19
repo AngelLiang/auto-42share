@@ -9,6 +9,9 @@ import read_csv
 import config
 import log
 
+import __version__
+APP_NAME = f'auto-42share-{__version__.VERSION}'
+
 
 class MyWidget(QtWidgets.QWidget):
     def __init__(self):
@@ -18,7 +21,7 @@ class MyWidget(QtWidgets.QWidget):
         api_key = config.get_api_key()
 
         # 创建 Api Key 标签和输入框
-        apikey_label = QtWidgets.QLabel("Please input your API key:", self)
+        apikey_label = QtWidgets.QLabel("请输入API key:", self)
         apikey_label.setGeometry(50, 50, 200, 30)
         self.apikey_input = QtWidgets.QLineEdit(self)
         # 将API密钥输入框设置为密码模式
@@ -28,7 +31,7 @@ class MyWidget(QtWidgets.QWidget):
         self.apikey_input.setText(api_key)
 
         # 创建选择CSV文件按钮和标签
-        self.select_csv_button = QtWidgets.QPushButton("Select CSV file", self)
+        self.select_csv_button = QtWidgets.QPushButton("请选择csv文件", self)
         self.select_csv_button.setGeometry(50, 150, 140, 30)
         self.select_csv_button.clicked.connect(
             self.on_select_csv_button_clicked)
@@ -46,9 +49,10 @@ class MyWidget(QtWidgets.QWidget):
         options = QtWidgets.QFileDialog.Options()
         options |= QtWidgets.QFileDialog.DontUseNativeDialog
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Select CSV file", "",
+            self, "请选择csv文件", "",
             "CSV Files (*.csv)", options=options)
         if file_name:
+            self.input_filepath = file_name
             self.selected_csv_label.setText(os.path.basename(file_name))
 
     def save_config(self):
@@ -59,23 +63,24 @@ class MyWidget(QtWidgets.QWidget):
     @QtCore.Slot()
     def start(self):
         api_key = self.apikey_input.text()
-        csv_file_path = self.selected_csv_label.text()
-        if not csv_file_path:
-            msg = "请选择一个csv文件"
-            log.logger.warning(msg)
-            self.showMessageBox(msg)
-            return
+        # csv_file_path = self.selected_csv_label.text()
+        # if not csv_file_path:
+        #     msg = "请选择一个csv文件"
+        #     log.logger.warning(msg)
+        #     self.showMessageBox(msg)
+        #     return
         try:
-            questions = read_csv.read_questions(csv_file_path)
+            questions = read_csv.read_questions(self.input_filepath)
         except Exception as e:
             msg = f"An error occurred while reading the CSV file: {e}"
             log.logger.warning(msg)
             self.showMessageBox(msg)
             return
+        log.logger.warning(f'从 {self.input_filepath} 读取数据')
         # log.logger.info(f'一共读取到{len(questions)}组问题')
 
         from main import start
-        t = Thread(target=start, args=(api_key, csv_file_path), daemon=True)
+        t = Thread(target=start, args=(api_key, self.input_filepath), daemon=True)
         t.start()
         log.logger.info('启动')
 
@@ -98,7 +103,7 @@ if __name__ == "__main__":
     widget.resize(400, 300)
     widget.show()
 
-    widget.setWindowTitle("auto-42share")
+    widget.setWindowTitle(APP_NAME)
     # 设置窗口置顶
     # widget.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
     log.logger.info('程序启动')

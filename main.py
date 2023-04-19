@@ -11,6 +11,7 @@ from selenium import webdriver
 import read_csv
 import write_excel
 import log
+import config
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -18,11 +19,6 @@ load_dotenv()
 
 CHROMEDRIVER_PATH = os.getenv('CHROMEDRIVER_PATH')
 CHATGPT_APIKEY = os.getenv('CHATGPT_APIKEY')
-SHARE_TITLE = '分享 Prompt'
-
-if not CHROMEDRIVER_PATH:
-    print(f'CHROMEDRIVER_PATH:{CHROMEDRIVER_PATH}')
-    exit(0)
 
 
 driver = None
@@ -33,7 +29,7 @@ def gen_random_second(min=8, max=15) -> int:
 
 
 def click_setting():
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 120)
     button = wait.until(
         EC.presence_of_element_located(
             (By.XPATH, "/html/body/div/div[1]/div[3]/div[1]/div[2]/div"))
@@ -43,7 +39,7 @@ def click_setting():
 
 def enter_api_key(api_key=CHATGPT_APIKEY):
     # 显式等待
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 120)
     apikey_input = wait.until(
         EC.presence_of_element_located(
             (By.XPATH, "//input[@placeholder='OpenAI API Key']"))
@@ -60,7 +56,7 @@ def return_chat():
 
 
 def create_new_chat():
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 60)
     new_chat = wait.until(
         EC.visibility_of_element_located(
             (By.XPATH, "/html/body/div/div[1]/div[3]/div[2]/div"))
@@ -70,7 +66,7 @@ def create_new_chat():
 
 
 def send_message(text):
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 60)
     chat_input = wait.until(
         EC.visibility_of_element_located(
             (By.CSS_SELECTOR, "div.home_chat-input-panel-inner__8J59p > textarea.home_chat-input__qM_hd"))
@@ -138,7 +134,8 @@ def start(api_key=CHATGPT_APIKEY, filepath='questions.csv'):
     # chrome_options.add_argument("--incognito")
     # chrome_options.add_argument("--start-maximized")
     chrome_options.add_extension('42share.crx')
-    driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=chrome_options)
+    chromedriver_path = config.get_chromedriver_path()
+    driver = webdriver.Chrome(chromedriver_path, chrome_options=chrome_options)
 
     driver.get("https://chat.42share.io/")
     log.logger.info('访问 https://chat.42share.io/')
@@ -148,27 +145,35 @@ def start(api_key=CHATGPT_APIKEY, filepath='questions.csv'):
     return_chat()
 
     question_group = read_csv.read_questions(filepath)
-    for questions in question_group:
-        for chat_message in questions:
+    for i, questions in enumerate(question_group, start=1):
+        if len(questions) < 5:
+            log.logger.info(f'第{i}行的问题小于5个，跳过')
+            continue
+        title = ''
+        for j, chat_message in enumerate(questions):
             if not chat_message:
+                log.logger.info(f'第{i}行第{j}列问题为空，跳过')
                 continue
+            if j == 0:
+                # 取第一个问题作为标题
+                title = chat_message
             send_message(chat_message)
             wait_reply_finish()
             reply = get_reply()
             if '出错了，稍后重试' in reply:
-                log.logger.error('出错了，再发送一次问题启动浏览器')
+                log.logger.error('出错了，直接退出')
+                exit(0)
                 send_message(chat_message)
                 wait_reply_finish()
-        send_message("请用10字以内总结前面全部对话")
-        wait_reply_finish()
-        title = get_reply()
+        # send_message("请用10字以内总结前面全部对话")
+        # wait_reply_finish()
+        # title = get_reply()
         share_url = click_share_and_get_url()
         log.logger.info(f'{title} {share_url}')
         if title and share_url:
             write_excel.write_to_excel(title, share_url)
 
         switch_chat()
-
         # 打开新的对话框
         create_new_chat()
         # 等待一段时间

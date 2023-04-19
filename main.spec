@@ -1,11 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
+import sys
+sys.path.append(".")
+import __version__
 
 block_cipher = None
 
 APP_NAME = 'auto-42share'
-WIN_NAME = APP_NAME + '_win_x64'
-MAC_NAME = APP_NAME + '_mac_x64.app'
+WIN_NAME = APP_NAME + '_win_x64-' + __version__.VERSION
+MAC_NAME = APP_NAME + '_mac_x64-' + __version__.VERSION + '.app'
 
 a = Analysis(
     ['ui.py', 'main.py', 'read_csv.py', 'write_excel.py', 'config.py'],

@@ -7,6 +7,9 @@ default_config = {
     "API": {
         "api_key": ""
     },
+    "CHROMEDRIVER": {
+        "path": os.path.join('chromedriver', 'chromedriver.exe')
+    }
     # "GUI": {
     #     "window_title": "My App",
     #     "window_size": "800x600"
@@ -17,6 +20,7 @@ default_config = {
 }
 
 config = ConfigParser()
+config.read_dict(default_config)
 
 
 def save():
@@ -25,10 +29,6 @@ def save():
 
 
 def load():
-    if not os.path.exists(CONFIG_PATH):
-        # 将默认配置应用于现有配置
-        config.read_dict(default_config)
-        save()
     config.read(CONFIG_PATH)
     return config
 
@@ -43,3 +43,9 @@ def set_api_key(api_key):
     if not config.has_section("API"):
         config.add_section("API")
     return config.set("API", "api_key", api_key)
+
+
+def get_chromedriver_path():
+    if not config.has_section("CHROMEDRIVER"):
+        config.add_section("CHROMEDRIVER")
+    return config.get("CHROMEDRIVER", 'path')
