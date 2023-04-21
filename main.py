@@ -24,7 +24,7 @@ CHATGPT_APIKEY = os.getenv('CHATGPT_APIKEY')
 driver = None
 
 
-def gen_random_second(min=8, max=15) -> int:
+def gen_random_second(min=9, max=15) -> int:
     return random.randint(min, max) + random.random()
 
 
@@ -71,23 +71,25 @@ def send_message(text):
         EC.visibility_of_element_located(
             (By.CSS_SELECTOR, "div.home_chat-input-panel-inner__8J59p > textarea.home_chat-input__qM_hd"))
     )
+    log.logger.info('用户输入消息')
     chat_input.send_keys(text)
     send_button = driver.find_element_by_class_name(
         "home_chat-input-send__rsJfH")
     random_second = gen_random_second()
     sleep(random_second)  # 等待几秒再发送
     send_button.click()
-    log.logger.info('发送消息')
+    log.logger.info('用户发送消息')
 
 
 def wait_reply_finish():
     entering_flag = driver.find_elements_by_class_name(
         'home_chat-message-status__EsVNi')
-    log.logger.info('正在输入...')
+    log.logger.info('AI正在输出')
     while len(entering_flag) >= 1:
-        sleep(3)
+        sleep(1)  # 每1s检查一次标识位
         entering_flag = driver.find_elements_by_class_name(
             'home_chat-message-status__EsVNi')
+    log.logger.info('AI输出结束')
 
 
 def get_reply():
@@ -105,13 +107,14 @@ def click_share_and_get_url() -> str:
     # 点击分享
     elem = driver.find_element_by_xpath("//div[@title='分享 Prompt']")
     elem.click()
+    log.logger.info('点击分享')
     # 等待一定时间，让新窗口完全打开
     sleep(10)
     # 获取所有窗口句柄
     window_handles = driver.window_handles
     # 切换到新打开的窗口
     driver.switch_to.window(window_handles[-1])
-    log.logger.info('分享并获取连接')
+    log.logger.info('获取连接')
     return driver.current_url
 
 
@@ -159,15 +162,10 @@ def start(api_key=CHATGPT_APIKEY, filepath='questions.csv'):
                 title = chat_message
             send_message(chat_message)
             wait_reply_finish()
-            reply = get_reply()
-            if '出错了，稍后重试' in reply:
-                log.logger.error('出错了，直接退出')
-                exit(0)
-                send_message(chat_message)
-                wait_reply_finish()
-        # send_message("请用10字以内总结前面全部对话")
-        # wait_reply_finish()
-        # title = get_reply()
+            # reply = get_reply()
+            # if '出错了，稍后重试' in reply:
+            #     log.logger.error('出错了，直接退出')
+            #     exit(0)
         share_url = click_share_and_get_url()
         log.logger.info(f'{title} {share_url}')
         if title and share_url:
