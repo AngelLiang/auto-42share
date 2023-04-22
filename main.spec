@@ -1,14 +1,23 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
 import sys
+import platform
 sys.path.append(".")
 import __version__
 
+
 block_cipher = None
 
-APP_NAME = 'auto-42share'
-WIN_NAME = APP_NAME + '_win_x64-' + __version__.VERSION
-MAC_NAME = APP_NAME + '_mac_x64-' + __version__.VERSION + '.app'
+
+APP_NAME = 'auto-42share' + __version__.VERSION
+BUNDLE_NAME = APP_NAME + '.app'
+if platform.system() == 'Windows':
+    APP_NAME = 'auto-42share_win_x64-' + __version__.VERSION
+    BUNDLE_NAME = APP_NAME + '.app'
+elif platform.system() == 'Darwin':
+    APP_NAME = 'auto-42share_mac-' + __version__.VERSION
+    BUNDLE_NAME = APP_NAME + '.app'
+
 
 a = Analysis(
     ['ui.py', 'main.py', 'read_csv.py', 'write_excel.py', 'config.py'],
@@ -34,7 +43,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name=WIN_NAME,
+    name=APP_NAME,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -51,7 +60,7 @@ exe = EXE(
 
 app = BUNDLE(
     exe,
-    name=MAC_NAME,
+    name=BUNDLE_NAME,
     icon=None,
     console=False,
     debug=False,

@@ -41,7 +41,7 @@ class MyWidget(QtWidgets.QWidget):
         self.selected_csv_label.setAlignment(Qt.AlignLeft)
         # self.selected_csv_label.setStyleSheet("background-color: white;")
 
-        interval_label = QtWidgets.QLabel("消息发送时间间隔", self)
+        interval_label = QtWidgets.QLabel("提问间隔（单位秒）", self)
         interval_label.setGeometry(50, 200, 100, 30)
         self.interval_input = QtWidgets.QLineEdit(self)
         validator = QtGui.QIntValidator()

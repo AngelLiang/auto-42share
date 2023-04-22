@@ -1,5 +1,16 @@
 import os
+import platform
 from configparser import ConfigParser
+import log
+
+chromedriver_filename = 'chromedriver.exe'
+if platform.system() == 'Darwin':
+    log.logger.info('macOS')
+    chromedriver_filename = 'chromedriver'
+elif platform.system() == 'Windows':
+    log.logger.info('Windows')
+    chromedriver_filename = 'chromedriver.exe'
+
 
 CONFIG_PATH = 'conf.ini'
 
@@ -8,7 +19,7 @@ default_config = {
         "api_key": ""
     },
     "CHROMEDRIVER": {
-        "path": os.path.join('chromedriver', 'chromedriver.exe')
+        "path": os.path.join('chromedriver', chromedriver_filename)
     },
     "CONFIG": {
         "send_message_interval": 20,

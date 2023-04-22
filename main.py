@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 import threading
 
 import read_csv
@@ -155,12 +156,15 @@ def click_share_and_get_url() -> str:
     window_handles = driver.window_handles
     # 切换到新打开的窗口
     driver.switch_to.window(window_handles[-1])
-    wait = WebDriverWait(driver, 60)
-    # 等待复制链接标签出现
-    copy_link_label = wait.until(
-        EC.visibility_of_element_located(
-            (By.XPATH, '//*[@id="__next"]/main/div[3]/button/span'))
-    )
+    try:
+        wait = WebDriverWait(driver, 60)
+        # 等待复制链接标签出现
+        copy_link_label = wait.until(
+            EC.visibility_of_element_located(
+                (By.XPATH, '//*[@id="__next"]/main/div[3]/button/span'))
+        )
+    except TimeoutException:
+        log.logger.error('没有找到分享连接按钮')
     log.logger.info('分享链接加载完成')
     return driver.current_url
 
