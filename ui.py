@@ -47,7 +47,7 @@ class MyWidget(QtWidgets.QWidget):
         validator = QtGui.QIntValidator()
         validator.setBottom(0)
         self.interval_input.setValidator(validator)
-        self.interval_input.setGeometry(150, 200, 80, 30)
+        self.interval_input.setGeometry(200, 200, 80, 30)
         self.interval_input.setText(interval)
 
         self.button = QtWidgets.QPushButton("启动", self)
