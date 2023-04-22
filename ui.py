@@ -31,6 +31,7 @@ class MyWidget(QtWidgets.QWidget):
         self.apikey_input.setText(api_key)
 
         # 创建选择CSV文件按钮和标签
+        self.input_filepath = ''
         self.select_csv_button = QtWidgets.QPushButton("请选择csv文件", self)
         self.select_csv_button.setGeometry(50, 150, 140, 30)
         self.select_csv_button.clicked.connect(
@@ -83,7 +84,7 @@ class MyWidget(QtWidgets.QWidget):
         try:
             questions = read_csv.read_questions(self.input_filepath)
         except Exception as e:
-            msg = f"An error occurred while reading the CSV file: {e}"
+            msg = f"在读取csv文件时发生一个错误: {e}"
             log.logger.warning(msg)
             self.showMessageBox(msg)
             return
@@ -105,6 +106,7 @@ class MyWidget(QtWidgets.QWidget):
     def showMessageBox(self, msg):
         log.logger.warning(msg)
         msgBox = QtWidgets.QMessageBox()
+        msgBox.setWindowTitle(APP_NAME)
         msgBox.setText(msg)
         msgBox.exec()
 
