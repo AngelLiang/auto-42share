@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, UnexpectedAlertPresentException
 import threading
 
 import read_csv
@@ -165,6 +165,11 @@ def click_share_and_get_url() -> str:
         )
     except TimeoutException:
         log.logger.error('没有找到分享连接按钮')
+    except UnexpectedAlertPresentException as e:
+        log.logger.error(f'分享失败：{e}')
+        # 30s后再试一次
+        sleep(30)
+        return click_share_and_get_url()
     log.logger.info('分享链接加载完成')
     return driver.current_url
 
