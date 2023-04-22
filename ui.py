@@ -3,7 +3,7 @@ import sys
 from threading import Thread
 
 from PySide6.QtCore import Qt
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets, QtGui
 
 import read_csv
 import config
@@ -19,6 +19,7 @@ class MyWidget(QtWidgets.QWidget):
 
         config.load()
         api_key = config.get_api_key()
+        interval = config.get_send_message_interval()
 
         # 创建 Api Key 标签和输入框
         apikey_label = QtWidgets.QLabel("请输入API key:", self)
@@ -27,7 +28,6 @@ class MyWidget(QtWidgets.QWidget):
         # 将API密钥输入框设置为密码模式
         self.apikey_input.setEchoMode(QtWidgets.QLineEdit.Password)
         self.apikey_input.setGeometry(50, 80, 300, 30)
-
         self.apikey_input.setText(api_key)
 
         # 创建选择CSV文件按钮和标签
@@ -41,8 +41,17 @@ class MyWidget(QtWidgets.QWidget):
         self.selected_csv_label.setAlignment(Qt.AlignLeft)
         # self.selected_csv_label.setStyleSheet("background-color: white;")
 
+        interval_label = QtWidgets.QLabel("消息发送时间间隔", self)
+        interval_label.setGeometry(50, 200, 100, 30)
+        self.interval_input = QtWidgets.QLineEdit(self)
+        validator = QtGui.QIntValidator()
+        validator.setBottom(0)
+        self.interval_input.setValidator(validator)
+        self.interval_input.setGeometry(150, 200, 80, 30)
+        self.interval_input.setText(interval)
+
         self.button = QtWidgets.QPushButton("启动", self)
-        self.button.setGeometry(50, 200, 80, 30)
+        self.button.setGeometry(50, 250, 80, 30)
         self.button.clicked.connect(self.start)
 
     def on_select_csv_button_clicked(self):
@@ -57,7 +66,9 @@ class MyWidget(QtWidgets.QWidget):
 
     def save_config(self):
         api_key = self.apikey_input.text()
+        interval = self.interval_input.text()
         config.set_api_key(api_key)
+        config.set_send_message_interval(interval or '20')
         config.save()
 
     @QtCore.Slot()
@@ -79,18 +90,20 @@ class MyWidget(QtWidgets.QWidget):
         log.logger.warning(f'从 {self.input_filepath} 读取数据')
         # log.logger.info(f'一共读取到{len(questions)}组问题')
 
+        self.save_config()
+
         from main import start
-        t = Thread(target=start, args=(api_key, self.input_filepath), daemon=True)
+        t = Thread(target=start, args=(api_key, self.input_filepath))
         t.start()
         log.logger.info('启动')
 
-        self.save_config()
         self.button.setEnabled(False)
         self.select_csv_button.setEnabled(False)
+        self.interval_input.setEnabled(False)
         self.apikey_input.setEnabled(False)
 
     def showMessageBox(self, msg):
-        log.logger.warnning(msg)
+        log.logger.warning(msg)
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText(msg)
         msgBox.exec()
@@ -100,7 +113,7 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication([])
 
     widget = MyWidget()
-    widget.resize(400, 300)
+    widget.resize(400, 350)
     widget.show()
 
     widget.setWindowTitle(APP_NAME)

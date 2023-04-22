@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium import webdriver
+import threading
 
 import read_csv
 import write_excel
@@ -24,7 +25,39 @@ CHATGPT_APIKEY = os.getenv('CHATGPT_APIKEY')
 driver = None
 
 
-def gen_random_second(min=9, max=15) -> int:
+class CountdownThread(threading.Thread):
+    def __init__(self, t: int):
+        threading.Thread.__init__(self)
+        self.t = int(t)
+        self.send_message_flag = False
+
+    def run(self):
+        while True:
+            if self.send_message_flag is True:
+                log.logger.info(f'启动消息间隔计时')
+                for i in range(self.t, 0, -1):
+                    sleep(1)
+                self.send_message_flag = False
+                log.logger.info(f'消息间隔计时结束')
+
+    def set_send_message_flag(self):
+        self.send_message_flag = True
+
+    def can_send_message(self):
+        return self.send_message_flag is False
+
+
+countdown_thread = None
+
+
+def init_countdown_thread():
+    global countdown_thread
+    interval = config.get_send_message_interval()
+    countdown_thread = CountdownThread(interval)
+    countdown_thread.start()
+
+
+def gen_random_second(min=9, max=15) -> float:
     return random.randint(min, max) + random.random()
 
 
@@ -75,9 +108,17 @@ def send_message(text):
     chat_input.send_keys(text)
     send_button = driver.find_element_by_class_name(
         "home_chat-input-send__rsJfH")
-    random_second = gen_random_second()
-    sleep(random_second)  # 等待几秒再发送
+    # random_second = gen_random_second()
+    # sleep(random_second)  # 等待几秒再发送
+
+    while True:
+        if countdown_thread.can_send_message():
+            break
+        next_check = gen_random_second(2, 5)
+        sleep(next_check)
+
     send_button.click()
+    countdown_thread.set_send_message_flag()
     log.logger.info('用户发送消息')
 
 
@@ -107,26 +148,36 @@ def click_share_and_get_url() -> str:
     # 点击分享
     elem = driver.find_element_by_xpath("//div[@title='分享 Prompt']")
     elem.click()
-    log.logger.info('点击分享')
+    log.logger.info('点击分享按钮')
     # 等待一定时间，让新窗口完全打开
-    sleep(10)
+    sleep(3)
     # 获取所有窗口句柄
     window_handles = driver.window_handles
     # 切换到新打开的窗口
     driver.switch_to.window(window_handles[-1])
-    log.logger.info('获取连接')
+    wait = WebDriverWait(driver, 60)
+    # 等待复制链接标签出现
+    copy_link_label = wait.until(
+        EC.visibility_of_element_located(
+            (By.XPATH, '//*[@id="__next"]/main/div[3]/button/span'))
+    )
+    log.logger.info('分享链接加载完成')
     return driver.current_url
 
 
 def switch_chat():
-    sleep(3)
     # 获取所有窗口句柄
     window_handles = driver.window_handles
     # 切换到第一个窗口
     driver.switch_to.window(window_handles[0])
     log.logger.info('切换对话框')
     # 等待切换
-    sleep(3)
+    # sleep(3)
+    wait = WebDriverWait(driver, 60)
+    new_chat = wait.until(
+        EC.visibility_of_element_located(
+            (By.CSS_SELECTOR, "div.home_chat-message-item__hDEOq"))
+    )
 
 
 def start(api_key=CHATGPT_APIKEY, filepath='questions.csv'):
@@ -146,6 +197,7 @@ def start(api_key=CHATGPT_APIKEY, filepath='questions.csv'):
     click_setting()
     enter_api_key(api_key)
     return_chat()
+    init_countdown_thread()
 
     question_group = read_csv.read_questions(filepath)
     for i, questions in enumerate(question_group, start=1):
@@ -167,6 +219,7 @@ def start(api_key=CHATGPT_APIKEY, filepath='questions.csv'):
             #     log.logger.error('出错了，直接退出')
             #     exit(0)
         share_url = click_share_and_get_url()
+        log.logger.info('获取连接')
         log.logger.info(f'{title} {share_url}')
         if title and share_url:
             write_excel.write_to_excel(title, share_url)
@@ -174,8 +227,8 @@ def start(api_key=CHATGPT_APIKEY, filepath='questions.csv'):
         switch_chat()
         # 打开新的对话框
         create_new_chat()
-        # 等待一段时间
-        sleep(7)
+        # 两个对话框之间的时间间隔。等待一段时间
+        # sleep(7)
 
     # 关闭浏览器实例
     # driver.quit()

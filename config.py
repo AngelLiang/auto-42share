@@ -9,7 +9,11 @@ default_config = {
     },
     "CHROMEDRIVER": {
         "path": os.path.join('chromedriver', 'chromedriver.exe')
-    }
+    },
+    "CONFIG": {
+        "send_message_interval": 20,
+    },
+
     # "GUI": {
     #     "window_title": "My App",
     #     "window_size": "800x600"
@@ -49,3 +53,15 @@ def get_chromedriver_path():
     if not config.has_section("CHROMEDRIVER"):
         config.add_section("CHROMEDRIVER")
     return config.get("CHROMEDRIVER", 'path')
+
+
+def get_send_message_interval():
+    if not config.has_section("CONFIG"):
+        config.add_section("CONFIG")
+    return config.get("CONFIG", 'send_message_interval')
+
+
+def set_send_message_interval(value):
+    if not config.has_section("CONFIG"):
+        config.add_section("CONFIG")
+    return config.set("CONFIG", "send_message_interval", value)
